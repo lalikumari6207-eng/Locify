@@ -87,6 +87,9 @@ button {
 .card {
   margin: 10px 0;
 }
+  #list {
+  padding-bottom: 80px; /* bottom nav space */
+  }
 </style>
 </head>
 
@@ -96,19 +99,24 @@ button {
 <div id="splash" class="center splash">Locify</div>
 
 <!-- ONBOARD -->
-<div id="onboard" class="center hidden">
-  <h2>Enter Details</h2>
-  <input id="name" placeholder="Name">
-  <input id="city" placeholder="City">
-  <input id="state" placeholder="State">
-  <button onclick="goHome()">Enter</button>
-</div>
+  <div id="onboard" class="center hidden">
+  <h2>Welcome to Locify 👋</h2>
+
+  <input id="name" placeholder="Enter your name">
+  <input id="city" placeholder="Enter your city">
+  <input id="state" placeholder="Enter your state">
+
+  <button onclick="goHome()">Continue</button>
+  </div>
 
 <!-- HOME -->
 <div id="home" class="hidden">
 
   <div class="topbar">
-    <div id="topbarText">Loading...</div>
+  <div id="topbarText"></div>
+  <button onclick="showAdd()">➕</button>
+  </div>
+  
 
     <button onclick="showAdd()">➕</button>
   </div>
@@ -182,18 +190,50 @@ setTimeout(() => {
 }, 2000);
 
 /* ================= USER ================= */
-function goHome() {
+  function goHome(){
+
   userName = document.getElementById("name").value;
   userCity = document.getElementById("city").value;
   userState = document.getElementById("state").value;
 
-  localStorage.setItem("user", JSON.stringify({userName,userCity,userState}));
+  localStorage.setItem("user", JSON.stringify({
+    userName, userCity, userState
+  }));
 
+  openHome();
+  }
+
+setTimeout(() => {
+
+  document.getElementById("splash").classList.add("hidden");
+
+  let user = localStorage.getItem("user");
+
+  if (!user) {
+    document.getElementById("onboard").classList.remove("hidden");
+    return;
+  }
+
+  user = JSON.parse(user);
+
+  userName = user.userName;
+  userCity = user.userCity;
+  userState = user.userState;
+
+  openHome();
+
+}, 2000);
+
+
+function openHome(){
   document.getElementById("onboard").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
-document.getElementById("topbarText").innerText =
-  `👋 ${userName} | 📍 ${userCity}, ${userState}`;
+  document.getElementById("topbarText").innerHTML =
+    `👤 ${userName} | 📍 ${userCity}, ${userState}`;
+
+  loadShops();
+}
 
   loadShops();
 }
@@ -266,9 +306,28 @@ function loadShops() {
     renderList();
   });
 }
+  if(shops.length === 0){
+  shops = [
+    {name:"Fashion Hub", type:"Clothing", phone:"9999999999", image:"https://images.unsplash.com/photo-1521334884684-d80222895322"},
+    {name:"Shoe Store", type:"Shoes", phone:"8888888888", image:"https://images.unsplash.com/photo-1528701800489-20be3c2eaebf"}
+  ];
+  }
 
 /* ================= RENDER ================= */
 function renderList() {
+  if(filtered.length === 0){
+  list.innerHTML = `
+    <div style="
+      text-align:center;
+      margin-top:60px;
+      opacity:0.7;
+    ">
+      <h3>No shops near you 📍</h3>
+      <p>Be the first to add a shop in your city</p>
+    </div>
+  `;
+  return;
+  }
 
   let search = document.getElementById("search").value.toLowerCase();
   let list = document.getElementById("list");
@@ -279,6 +338,20 @@ function renderList() {
     s.name.toLowerCase().includes(search) ||
     s.type.toLowerCase().includes(search)
   );
+
+  function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+  }
 
   filtered.forEach(item => {
     list.innerHTML += `
