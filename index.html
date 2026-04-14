@@ -145,13 +145,15 @@ button:hover{
   <h2>Add Shop 🏪</h2>
 
   <input id="shopName" placeholder="Shop Name">
-  <input id="shopType" placeholder="Shop Type (Cloth, Food)">
+  <input id="shopType" placeholder="Shop Type">
   <input id="shopItem" placeholder="What they sell">
   <input id="shopLocation" placeholder="Location">
-  <input id="shopContact" placeholder="Contact Number">
-  <textarea id="shopMsg" placeholder="Message / Description"></textarea>
+  <input id="shopContact" placeholder="Contact">
+  <textarea id="shopMsg" placeholder="Description"></textarea>
 
-  <button onclick="saveShop()">Save Shop</button>
+  <input type="file" id="shopImage">
+
+  <button onclick="saveShop()">Upload Shop</button>
 
 </div>
 
@@ -167,6 +169,25 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+  function uploadImage(file, callback){
+
+  let storageRef = storage.ref("shops/" + Date.now() + "_" + file.name);
+
+  let uploadTask = storageRef.put(file);
+
+  uploadTask.on("state_changed",
+
+    null,
+    (error)=> console.log(error),
+
+    ()=> {
+      uploadTask.snapshot.ref.getDownloadURL().then(url=>{
+        callback(url);
+      });
+    }
+
+  );
+  }
 
 /* DATA */
 let userName="", userCity="", userState="";
@@ -222,17 +243,27 @@ function showAdd(){
 }
 
 /* SAVE SHOP */
-function saveShop(){
+  function saveShop(){
 
-  let shop={
-    name:shopName.value,
-    type:shopType.value,
-    item:shopItem.value,
-    location:shopLocation.value,
-    contact:shopContact.value,
-    msg:shopMsg.value,
-    city:userCity
-  };
+  let file = document.getElementById("shopImage").files[0];
+
+  if(!file){
+    alert("Please select shop image");
+    return;
+  }
+
+  uploadImage(file, (imageUrl)=>{
+
+    let shop = {
+      name: shopName.value,
+      type: shopType.value,
+      item: shopItem.value,
+      location: shopLocation.value,
+      contact: shopContact.value,
+      msg: shopMsg.value,
+      city: userCity,
+      image: imageUrl
+    };
 
   db.ref("shops").push(shop);
 
@@ -260,22 +291,46 @@ function loadShops(){
 }
 
 /* RENDER */
-function render(){
+    function render(){
 
-  let q=document.getElementById("search").value.toLowerCase();
-  let list=document.getElementById("list");
+  let q = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
 
-  let filtered=shops.filter(s=>
+  let filtered = shops.filter(s =>
     s.name.toLowerCase().includes(q) ||
     s.type.toLowerCase().includes(q)
   );
 
-  if(filtered.length==0){
-    list.innerHTML=`
+  if(filtered.length === 0){
+    list.innerHTML = `
       <div class="card">
-        <h3>No shops yet 📍</h3>
-        <p>Be first to add shop in ${userCity}</p>
+        <h3>No shops found 📍</h3>
+        <p>Add first shop in ${userCity}</p>
       </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = "";
+
+  filtered.forEach(s => {
+    list.innerHTML += `
+      <div class="card">
+
+        <img src="${s.image}" style="width:100%;border-radius:12px;margin-bottom:10px;">
+
+        <h3>${s.name}</h3>
+        <p>🏷️ ${s.type}</p>
+        <p>🛍️ ${s.item}</p>
+        <p>📍 ${s.location}</p>
+        <p>📞 ${s.contact}</p>
+        <p>${s.msg}</p>
+
+      </div>
+    `;
+  });
+
+    }
     `;
     return;
   }
