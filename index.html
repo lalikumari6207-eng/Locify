@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify </title>
+<title>Locify App</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
@@ -17,19 +17,21 @@ body{
   font-family:Poppins;
   background:#0f172a;
   color:white;
-  overflow:hidden; /* IMPORTANT = no page scroll */
+  overflow:hidden;
 }
 
-/* SPLASH */
+.hidden{display:none;}
+
 .center{
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
+  flex-direction:column;
 }
 
 .splash{
-  font-size:40px;
+  font-size:42px;
   font-weight:bold;
 }
 
@@ -58,7 +60,6 @@ body{
   display:flex;
   align-items:flex-end;
   padding:10px;
-  font-weight:bold;
 }
 
 /* FEED */
@@ -79,15 +80,6 @@ body{
 .card img{
   width:100%;
   border-radius:10px;
-}
-
-/* BUTTON */
-button{
-  padding:8px 12px;
-  border:none;
-  border-radius:10px;
-  background:#3b82f6;
-  color:white;
 }
 
 /* MODAL */
@@ -114,8 +106,16 @@ input,textarea{
   width:100%;
   padding:10px;
   margin:5px 0;
-  border-radius:8px;
   border:none;
+  border-radius:8px;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  background:#3b82f6;
+  color:white;
 }
 </style>
 </head>
@@ -139,17 +139,18 @@ input,textarea{
 <!-- HOME -->
 <div id="home" class="screen">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <button onclick="openModal()">➕ Add Shop</button>
     <div id="userInfo"></div>
   </div>
 
-  <!-- HERO -->
-  <div class="hero" id="hero">Loading city...</div>
+  <div class="hero" id="hero">Loading...</div>
 
-  <!-- FEED -->
-  <div class="feed" id="feed"></div>
+  <div class="feed">
+    <input id="search" placeholder="Search shops..." onkeyup="render()">
+    <div id="list"></div>
+  </div>
+
 </div>
 
 <!-- MODAL -->
@@ -163,7 +164,7 @@ input,textarea{
     <input id="shopItem" placeholder="Item">
     <input id="shopLocation" placeholder="Location">
     <input id="shopContact" placeholder="Contact">
-    <textarea id="shopMsg" placeholder="Description"></textarea>
+    <textarea id="shopMsg" placeholder="Message"></textarea>
     <input type="file" id="shopImage">
 
     <button onclick="saveShop()">Upload</button>
@@ -184,26 +185,30 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 const storage = firebase.storage();
 
-let user;
+let user = null;
+let shops = [];
 
 /* SPLASH */
 setTimeout(()=>{
   document.getElementById("splash").style.display="none";
 
-  user = JSON.parse(localStorage.getItem("user"));
+  let data = localStorage.getItem("user");
 
-  if(!user){
+  if(!data){
     document.getElementById("onboard").style.display="flex";
   } else {
+    user = JSON.parse(data);
     openHome();
   }
 },2000);
 
 /* START */
 function startApp(){
+
   user = {
     name:name.value,
     city:city.value,
@@ -211,6 +216,7 @@ function startApp(){
   };
 
   localStorage.setItem("user",JSON.stringify(user));
+
   openHome();
 }
 
@@ -221,7 +227,7 @@ function openHome(){
   document.getElementById("home").style.display="flex";
 
   document.getElementById("userInfo").innerText =
-    `${user.name} | ${user.city}`;
+    `👤 ${user.name} | 📍 ${user.city}`;
 
   document.getElementById("hero").style.backgroundImage =
     `url('https://source.unsplash.com/1600x900/?${user.city},india,city')`;
@@ -238,7 +244,7 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* UPLOAD IMAGE */
+/* IMAGE UPLOAD */
 function uploadImage(file, cb){
 
   let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
@@ -280,28 +286,54 @@ function loadShops(){
 
   db.ref("shops").on("value",snap=>{
 
-    let feed = document.getElementById("feed");
-    feed.innerHTML="";
+    shops = [];
 
     snap.forEach(s=>{
-
-      let d=s.val();
-
-      if(d.city===user.city){
-
-        feed.innerHTML+=`
-          <div class="card">
-            <img src="${d.image}">
-            <h3>${d.name}</h3>
-            <p>${d.type}</p>
-            <p>${d.item}</p>
-            <p>${d.location}</p>
-            <p>${d.contact}</p>
-            <p>${d.msg}</p>
-          </div>
-        `;
+      let d = s.val();
+      if(d.city && d.city.toLowerCase() === user.city.toLowerCase()){
+        shops.push(d);
       }
     });
+
+    render();
+  });
+}
+
+/* RENDER */
+function render(){
+
+  let q = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
+
+  let filtered = shops.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.type.toLowerCase().includes(q)
+  );
+
+  if(filtered.length === 0){
+    list.innerHTML = `
+      <div class="card">
+        <h3>No Shops Found 📍</h3>
+        <p>Add your first shop in ${user.city}</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = "";
+
+  filtered.forEach(s=>{
+    list.innerHTML += `
+      <div class="card">
+        <img src="${s.image}">
+        <h3>${s.name}</h3>
+        <p>${s.type}</p>
+        <p>${s.item}</p>
+        <p>${s.location}</p>
+        <p>${s.contact}</p>
+        <p>${s.msg}</p>
+      </div>
+    `;
   });
 }
 
