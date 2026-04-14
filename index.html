@@ -18,10 +18,14 @@ body{
 }
 
 #onboard,#home{display:none;}
-  
 
-.screen{height:100vh;flex-direction:column;}
-.center{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;}
+.center{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  flex-direction:column;
+}
 
 input,textarea{
   width:90%;
@@ -49,7 +53,6 @@ button{
   justify-content:space-between;
   padding:12px;
   background:rgba(17,24,39,0.7);
-  backdrop-filter: blur(10px);
 }
 
 .hero{
@@ -81,6 +84,7 @@ button{
   justify-content:center;
   align-items:center;
 }
+
 .modal-box{
   background:#111827;
   padding:15px;
@@ -98,7 +102,7 @@ button{
 </div>
 
 <!-- ONBOARD -->
-<div id="onboard" class="screen center">
+<div id="onboard" class="center">
   <h2>Welcome 🚀</h2>
   <input id="name" placeholder="Name">
   <input id="city" placeholder="City">
@@ -107,7 +111,7 @@ button{
 </div>
 
 <!-- HOME -->
-<div id="home" class="screen">
+<div id="home">
 
   <div class="topbar">
     <button onclick="openModal()">+ Add Shop</button>
@@ -164,43 +168,55 @@ const storage = firebase.storage();
 let user = null;
 let shops = [];
 
-/* SPLASH FLOW */
-setTimeout(()=>{
-  document.getElementById("splash").style.display="none";
+/* SPLASH SAFE FIX */
+setTimeout(() => {
+  document.getElementById("splash").style.display = "none";
 
   const data = localStorage.getItem("user");
 
-  if(data){
-    user = JSON.parse(data);
-    openHome();
-  }else{
-    document.getElementById("onboard").style.display="flex";
+  if (data) {
+    try {
+      user = JSON.parse(data);
+
+      if (!user?.name || !user?.city) {
+        throw "invalid";
+      }
+
+      openHome();
+    } catch (e) {
+      localStorage.removeItem("user");
+      document.getElementById("onboard").style.display = "flex";
+    }
+
+  } else {
+    document.getElementById("onboard").style.display = "flex";
   }
-},1500);
 
-/* START */
-function startApp(){
-  const name = document.getElementById("name").value;
-  const city = document.getElementById("city").value;
-  const state = document.getElementById("state").value;
+}, 1500);
 
-  if(!name || !city || !state){
+/* START FIX */
+function startApp() {
+  const name = document.getElementById("name").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const state = document.getElementById("state").value.trim();
+
+  if (!name || !city || !state) {
     alert("Fill all fields");
     return;
   }
 
-  user = {name, city, state};
+  user = { name, city, state };
   localStorage.setItem("user", JSON.stringify(user));
   openHome();
 }
 
-/* HOME */
-function openHome(){
-  document.getElementById("onboard").style.display="none";
-  document.getElementById("home").style.display="flex";
+/* HOME FIX */
+function openHome() {
+  document.getElementById("onboard").style.display = "none";
+  document.getElementById("home").style.display = "block";
 
   document.getElementById("userInfo").innerText =
-    `${user.name} | ${user.city}`;
+    `${user?.name || ""} | ${user?.city || ""}`;
 
   document.getElementById("hero").style.backgroundImage =
     `url('https://source.unsplash.com/1600x900/?${user.city},city')`;
@@ -216,32 +232,41 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* UPLOAD IMAGE */
+/* IMAGE UPLOAD SAFE */
 function uploadImage(file, cb){
-  let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
-  ref.put(file).then(snap=>{
-    snap.ref.getDownloadURL().then(cb);
+  if(!file){
+    alert("Select image first");
+    return;
+  }
+
+  const ref = storage.ref("shops/" + Date.now() + "_" + file.name);
+
+  ref.put(file).then(snapshot=>{
+    snapshot.ref.getDownloadURL().then(cb);
+  }).catch(err=>{
+    alert("Upload failed");
   });
 }
 
-/* SAVE SHOP */
+/* SAVE SHOP FIX */
 function saveShop(){
 
   const file = document.getElementById("shopImage").files[0];
+
   if(!file){
-    alert("Select image");
+    alert("Select image first");
     return;
   }
 
   uploadImage(file,(url)=>{
 
     const shop = {
-      name: document.getElementById("shopName").value,
-      type: document.getElementById("shopType").value,
-      item: document.getElementById("shopItem").value,
-      location: document.getElementById("shopLocation").value,
-      contact: document.getElementById("shopContact").value,
-      msg: document.getElementById("shopMsg").value,
+      name: document.getElementById("shopName").value.trim(),
+      type: document.getElementById("shopType").value.trim(),
+      item: document.getElementById("shopItem").value.trim(),
+      location: document.getElementById("shopLocation").value.trim(),
+      contact: document.getElementById("shopContact").value.trim(),
+      msg: document.getElementById("shopMsg").value.trim(),
       city: user.city.toLowerCase(),
       image: url
     };
@@ -260,7 +285,7 @@ function loadShops(){
 
     snap.forEach(s=>{
       const d = s.val();
-      if(d.city === user.city.toLowerCase()){
+      if(d?.city === user.city.toLowerCase()){
         shops.push(d);
       }
     });
@@ -269,7 +294,7 @@ function loadShops(){
   });
 }
 
-/* RENDER */
+/* RENDER SAFE */
 function render(){
 
   const q = (document.getElementById("search").value || "").toLowerCase();
@@ -278,8 +303,8 @@ function render(){
   list.innerHTML = "";
 
   const filtered = shops.filter(s =>
-    (s.name||"").toLowerCase().includes(q) ||
-    (s.type||"").toLowerCase().includes(q)
+    (s?.name || "").toLowerCase().includes(q) ||
+    (s?.type || "").toLowerCase().includes(q)
   );
 
   if(filtered.length === 0){
