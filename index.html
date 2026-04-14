@@ -7,20 +7,20 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
-<!-- FIREBASE (FIXED V8) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <style>
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
-  color: white;
+
+body{
+  margin:0;
+  font-family:Poppins;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
 }
 
-.center {
+/* SPLASH */
+.center{
   display:flex;
   justify-content:center;
   align-items:center;
@@ -28,68 +28,82 @@ body {
   flex-direction:column;
 }
 
-.hidden { display:none; }
-
-.splash {
-  font-size: 40px;
-  font-weight: bold;
-  animation: fade 1.5s ease;
+.splash{
+  font-size:45px;
+  font-weight:bold;
+  color:white;
+  animation: zoom 1.5s ease;
 }
 
-@keyframes fade {
-  from {opacity:0; transform:scale(0.5);}
-  to {opacity:1; transform:scale(1);}
+@keyframes zoom{
+  from{opacity:0; transform:scale(0.5);}
+  to{opacity:1; transform:scale(1);}
 }
 
-.topbar {
-  background: rgba(255,255,255,0.1);
-  padding: 15px;
-  backdrop-filter: blur(10px);
+.hidden{display:none;}
 
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-} 
-
-input {
-  padding: 12px;
-  width: 90%;
-  margin: 8px;
-  border-radius: 10px;
-  border: none;
+/* TOPBAR */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
 }
 
-button {
-  padding: 10px 15px;
-  border-radius: 20px;
-  border: none;
-  background: #ff4b2b;
-  color: white;
-  cursor: pointer;
-  margin: 5px;
+/* INPUT */
+input, textarea{
+  width:90%;
+  padding:12px;
+  margin:6px;
+  border:none;
+  border-radius:10px;
+  outline:none;
 }
 
-.card {
-  background: rgba(255,255,255,0.1);
-  margin: 15px;
-  padding: 15px;
-  border-radius: 15px;
+/* BUTTON */
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:20px;
+  background:linear-gradient(45deg,#00c6ff,#0072ff);
+  color:white;
+  cursor:pointer;
+  margin:5px;
 }
 
-.card img {
-  width: 100%;
-  border-radius: 10px;
-}
-  #list {
-  margin-top: 10px;
+button:hover{
+  transform:scale(1.05);
 }
 
-.card {
-  margin: 10px 0;
+/* CARD */
+.card{
+  background:rgba(255,255,255,0.1);
+  padding:15px;
+  margin:10px;
+  border-radius:15px;
+  backdrop-filter:blur(10px);
 }
-  #list {
-  padding-bottom: 80px; /* bottom nav space */
-  }
+
+.card img{
+  width:100%;
+  border-radius:10px;
+}
+
+/* BACKGROUND HERO */
+.hero{
+  height:150px;
+  background:url("https://images.unsplash.com/photo-1508057198894-247b23fe5ade");
+  background-size:cover;
+  border-radius:15px;
+  margin:10px;
+  display:flex;
+  align-items:flex-end;
+  padding:10px;
+  font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -99,270 +113,188 @@ button {
 <div id="splash" class="center splash">Locify</div>
 
 <!-- ONBOARD -->
-  <div id="onboard" class="center hidden">
-  <h2>Welcome to Locify 👋</h2>
-
+<div id="onboard" class="center hidden">
+  <h2>Welcome 👋</h2>
   <input id="name" placeholder="Enter your name">
-  <input id="city" placeholder="Enter your city">
-  <input id="state" placeholder="Enter your state">
-
-  <button onclick="goHome()">Continue</button>
-  </div>
+  <input id="city" placeholder="Enter city">
+  <input id="state" placeholder="Enter state">
+  <button onclick="startApp()">Continue</button>
+</div>
 
 <!-- HOME -->
 <div id="home" class="hidden">
 
   <div class="topbar">
-  <div id="topbarText"></div>
-  <button onclick="showAdd()">➕</button>
-  </div>
-  
-
+    <div id="userText"></div>
     <button onclick="showAdd()">➕</button>
   </div>
 
+  <div class="hero" id="heroText">Discover your city</div>
+
   <div style="padding:10px;">
-    <input id="search" placeholder="Search shops..." onkeyup="renderList()">
+    <input id="search" placeholder="Search shops..." onkeyup="render()">
 
     <div id="list"></div>
   </div>
+
 </div>
 
 <!-- ADD SHOP -->
 <div id="addForm" class="center hidden">
-  <h2>Add Shop</h2>
+
+  <h2>Add Shop 🏪</h2>
 
   <input id="shopName" placeholder="Shop Name">
-  <input id="shopType" placeholder="Type">
-  <input id="shopCity" placeholder="City">
-  <input id="shopPhone" placeholder="Phone">
-  <input type="file" id="shopImage">
+  <input id="shopType" placeholder="Shop Type (Cloth, Food)">
+  <input id="shopItem" placeholder="What they sell">
+  <input id="shopLocation" placeholder="Location">
+  <input id="shopContact" placeholder="Contact Number">
+  <textarea id="shopMsg" placeholder="Message / Description"></textarea>
 
   <button onclick="saveShop()">Save Shop</button>
+
 </div>
 
 <script>
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoYq2A",
   authDomain: "locify-57f73.firebaseapp.com",
   databaseURL: "https://locify-57f73-default-rtdb.firebaseio.com",
-  projectId: "locify-57f73",
-  storageBucket: "locify-57f73.appspot.com",
-  messagingSenderId: "231657948871",
-  appId: "1:231657948871:web:7bc39f030cb51b285920e2"
+  projectId: "locify-57f73"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
-const storage = firebase.storage();
 
-/* ================= DATA ================= */
-let userName = "";
-let userCity = "";
-let userState = "";
-let shops = [];
+/* DATA */
+let userName="", userCity="", userState="";
+let shops=[];
 
-/* ================= SPLASH ================= */
-setTimeout(() => {
+/* SPLASH */
+setTimeout(()=>{
   document.getElementById("splash").classList.add("hidden");
 
   let user = localStorage.getItem("user");
 
-  if (user) {
+  if(!user){
+    document.getElementById("onboard").classList.remove("hidden");
+  }else{
     user = JSON.parse(user);
-
-    userName = user.userName;
-    userCity = user.userCity;
-    userState = user.userState;
-
-    document.getElementById("home").classList.remove("hidden");
-
-    document.getElementById("topbar").innerText =
-      `👋 ${userName} | 📍 ${userCity}, ${userState}`;
-
-    loadShops();
-  } else {
-    document.getElementById("onboard").classList.remove("hidden");
+    userName=user.userName;
+    userCity=user.userCity;
+    userState=user.userState;
+    openHome();
   }
-}, 2000);
 
-/* ================= USER ================= */
-  function goHome(){
+},2000);
 
-  userName = document.getElementById("name").value;
-  userCity = document.getElementById("city").value;
-  userState = document.getElementById("state").value;
+/* START */
+function startApp(){
 
-  localStorage.setItem("user", JSON.stringify({
-    userName, userCity, userState
-  }));
+  userName=document.getElementById("name").value;
+  userCity=document.getElementById("city").value;
+  userState=document.getElementById("state").value;
+
+  localStorage.setItem("user",JSON.stringify({userName,userCity,userState}));
 
   openHome();
-  }
+}
 
-setTimeout(() => {
-
-  document.getElementById("splash").classList.add("hidden");
-
-  let user = localStorage.getItem("user");
-
-  if (!user) {
-    document.getElementById("onboard").classList.remove("hidden");
-    return;
-  }
-
-  user = JSON.parse(user);
-
-  userName = user.userName;
-  userCity = user.userCity;
-  userState = user.userState;
-
-  openHome();
-
-}, 2000);
-
-
+/* HOME */
 function openHome(){
   document.getElementById("onboard").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
-  document.getElementById("topbarText").innerHTML =
-    `👤 ${userName} | 📍 ${userCity}, ${userState}`;
+  document.getElementById("userText").innerHTML =
+    `👤 ${userName} | 📍 ${userCity}`;
+
+  document.getElementById("heroText").innerText =
+    "Welcome to " + userCity + " ❤️";
 
   loadShops();
 }
 
-  loadShops();
-}
-
-/* ================= ADD FORM ================= */
-function showAdd() {
+/* ADD FORM */
+function showAdd(){
   document.getElementById("addForm").classList.remove("hidden");
 }
 
-/* ================= IMAGE UPLOAD ================= */
-function uploadImage(file, cb) {
-  let ref = storage.ref("shops/" + file.name);
-  let task = ref.put(file);
+/* SAVE SHOP */
+function saveShop(){
 
-  task.on("state_changed",
-    null,
-    (err) => console.log(err),
-    () => {
-      task.snapshot.ref.getDownloadURL().then(url => {
-        cb(url);
-      });
-    }
-  );
+  let shop={
+    name:shopName.value,
+    type:shopType.value,
+    item:shopItem.value,
+    location:shopLocation.value,
+    contact:shopContact.value,
+    msg:shopMsg.value,
+    city:userCity
+  };
+
+  db.ref("shops").push(shop);
+
+  alert("Shop Added 🚀");
+
+  document.getElementById("addForm").classList.add("hidden");
 }
 
-/* ================= SAVE SHOP ================= */
-function saveShop() {
+/* LOAD */
+function loadShops(){
 
-  let file = document.getElementById("shopImage").files[0];
+  db.ref("shops").on("value",snap=>{
+    shops=[];
 
-  if (!file) {
-    alert("Please select image");
-    return;
-  }
-
-  uploadImage(file, (url) => {
-
-    let shop = {
-      name: shopName.value,
-      type: shopType.value,
-      city: shopCity.value,
-      phone: shopPhone.value,
-      image: url
-    };
-
-    db.ref("shops").push(shop);
-
-    alert("Shop Added 🚀");
-
-    document.getElementById("addForm").classList.add("hidden");
-
-    loadShops();
-  });
-}
-
-/* ================= LOAD SHOPS ================= */
-function loadShops() {
-
-  db.ref("shops").on("value", snap => {
-    shops = [];
-
-    snap.forEach(child => {
-      let data = child.val();
-
-      if (data.city && data.city.toLowerCase() === userCity.toLowerCase()) {
-        shops.push(data);
+    snap.forEach(s=>{
+      let d=s.val();
+      if(d.city==userCity){
+        shops.push(d);
       }
     });
 
-    renderList();
+    render();
   });
+
 }
-  if(shops.length === 0){
-  shops = [
-    {name:"Fashion Hub", type:"Clothing", phone:"9999999999", image:"https://images.unsplash.com/photo-1521334884684-d80222895322"},
-    {name:"Shoe Store", type:"Shoes", phone:"8888888888", image:"https://images.unsplash.com/photo-1528701800489-20be3c2eaebf"}
-  ];
-  }
 
-/* ================= RENDER ================= */
-function renderList() {
-  if(filtered.length === 0){
-  list.innerHTML = `
-    <div style="
-      text-align:center;
-      margin-top:60px;
-      opacity:0.7;
-    ">
-      <h3>No shops near you 📍</h3>
-      <p>Be the first to add a shop in your city</p>
-    </div>
-  `;
-  return;
-  }
+/* RENDER */
+function render(){
 
-  let search = document.getElementById("search").value.toLowerCase();
-  let list = document.getElementById("list");
+  let q=document.getElementById("search").value.toLowerCase();
+  let list=document.getElementById("list");
 
-  list.innerHTML = "";
-
-  let filtered = shops.filter(s =>
-    s.name.toLowerCase().includes(search) ||
-    s.type.toLowerCase().includes(search)
+  let filtered=shops.filter(s=>
+    s.name.toLowerCase().includes(q) ||
+    s.type.toLowerCase().includes(q)
   );
 
-  function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-
-  const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  if(filtered.length==0){
+    list.innerHTML=`
+      <div class="card">
+        <h3>No shops yet 📍</h3>
+        <p>Be first to add shop in ${userCity}</p>
+      </div>
+    `;
+    return;
   }
 
-  filtered.forEach(item => {
-    list.innerHTML += `
+  list.innerHTML="";
+
+  filtered.forEach(s=>{
+    list.innerHTML+=`
       <div class="card">
-        <img src="${item.image}">
-        <h3>${item.name}</h3>
-        <p>${item.type}</p>
-        <p>${item.phone}</p>
+        <h3>${s.name}</h3>
+        <p>🏷️ ${s.type}</p>
+        <p>🛍️ ${s.item}</p>
+        <p>📍 ${s.location}</p>
+        <p>📞 ${s.contact}</p>
+        <p>${s.msg}</p>
       </div>
     `;
   });
+
 }
 
 </script>
