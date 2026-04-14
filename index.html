@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify Next Level</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<title>Locify</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -14,117 +12,79 @@
 <style>
 body{
   margin:0;
-  font-family:Poppins;
-  background: linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
+  font-family:Arial;
+  background: linear-gradient(135deg,#0f172a,#1e293b,#0b1220);
   color:white;
-  overflow:hidden;
 }
 
-/* SPLASH */
-.center{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  flex-direction:column;
+#onboard,#home{display:none;}
+
+.screen{height:100vh;flex-direction:column;}
+.center{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;}
+
+input,textarea{
+  width:90%;
+  padding:12px;
+  margin:6px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:#111827;
+  color:white;
 }
 
-.splash{
-  font-size:48px;
-  font-weight:800;
-  animation: zoom 1.5s ease;
+button{
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(90deg,#3b82f6,#8b5cf6);
+  color:white;
+  cursor:pointer;
+  margin:5px;
 }
 
-@keyframes zoom{
-  from{transform:scale(0.5);opacity:0;}
-  to{transform:scale(1);opacity:1;}
-}
-
-/* SCREEN */
-.screen{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
-
-/* TOPBAR */
 .topbar{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   padding:12px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(10px);
+  background:rgba(17,24,39,0.7);
+  backdrop-filter: blur(10px);
 }
 
-/* HERO */
 .hero{
-  height:120px;
+  height:140px;
   margin:10px;
   border-radius:15px;
   background-size:cover;
   display:flex;
   align-items:flex-end;
   padding:10px;
-  font-weight:bold;
 }
 
-/* FEED */
-.feed{
-  flex:1;
-  overflow-y:auto;
-  padding:10px;
-}
+.feed{flex:1;overflow:auto;padding:10px;}
 
-/* CARD */
 .card{
-  background:rgba(255,255,255,0.08);
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:12px;
+  background:rgba(30,41,59,0.8);
+  margin:10px 0;
+  padding:10px;
+  border-radius:15px;
 }
 
-.card img{
-  width:100%;
-  border-radius:10px;
-}
+.card img{width:100%;border-radius:12px;}
 
-/* BUTTON */
-button{
-  padding:8px 12px;
-  border:none;
-  border-radius:10px;
-  background:#3b82f6;
-  color:white;
-  cursor:pointer;
-}
-
-/* MODAL */
 .modal{
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.7);
+  inset:0;
+  background:#000a;
   display:none;
   justify-content:center;
   align-items:center;
 }
-
-.modal-content{
+.modal-box{
   background:#111827;
   padding:15px;
-  border-radius:12px;
   width:90%;
-}
-
-input,textarea{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
+  border-radius:15px;
 }
 </style>
 </head>
@@ -132,31 +92,31 @@ input,textarea{
 <body>
 
 <!-- SPLASH -->
-<div id="splash" class="center splash">LOCIFY</div>
+<div id="splash" class="center">
+  <h1>LOCIFY</h1>
+</div>
 
 <!-- ONBOARD -->
 <div id="onboard" class="screen center">
-  <div>
-    <h2>Welcome 👋</h2>
-    <input id="name" placeholder="Name">
-    <input id="city" placeholder="City">
-    <input id="state" placeholder="State">
-    <button onclick="startApp()">Continue</button>
-  </div>
+  <h2>Welcome 🚀</h2>
+  <input id="name" placeholder="Name">
+  <input id="city" placeholder="City">
+  <input id="state" placeholder="State">
+  <button onclick="startApp()">Continue</button>
 </div>
 
 <!-- HOME -->
 <div id="home" class="screen">
 
   <div class="topbar">
-    <button onclick="openModal()">➕ Add Shop</button>
+    <button onclick="openModal()">+ Add Shop</button>
     <div id="userInfo"></div>
   </div>
 
-  <div class="hero" id="hero">Loading city...</div>
+  <div class="hero" id="hero">Loading...</div>
 
   <div class="feed">
-    <input id="search" placeholder="Search shops..." onkeyup="render()">
+    <input id="search" placeholder="Search..." onkeyup="render()">
     <div id="list"></div>
   </div>
 
@@ -164,9 +124,9 @@ input,textarea{
 
 <!-- MODAL -->
 <div class="modal" id="modal">
-  <div class="modal-content">
+  <div class="modal-box">
 
-    <h3>Add Shop 🏪</h3>
+    <h3>Add Shop</h3>
 
     <input id="shopName" placeholder="Shop Name">
     <input id="shopType" placeholder="Type">
@@ -186,11 +146,13 @@ input,textarea{
 
 /* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoYq2A",
+  apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoY2A",
   authDomain: "locify-57f73.firebaseapp.com",
   databaseURL: "https://locify-57f73-default-rtdb.firebaseio.com",
   projectId: "locify-57f73",
-  storageBucket: "locify-57f73.appspot.com"
+  storageBucket: "locify-57f73.appspot.com",
+  messagingSenderId: "231657948871",
+  appId: "1:231657948871:web:7bc39f030cb51b285920e2"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -201,60 +163,61 @@ const storage = firebase.storage();
 let user = null;
 let shops = [];
 
-/* SPLASH */
+/* SPLASH FLOW */
 setTimeout(()=>{
   document.getElementById("splash").style.display="none";
 
   const data = localStorage.getItem("user");
 
-  if(!data){
-    document.getElementById("onboard").style.display="flex";
-  } else {
+  if(data){
     user = JSON.parse(data);
     openHome();
+  }else{
+    document.getElementById("onboard").style.display="flex";
   }
-},2000);
+},1500);
 
 /* START */
 function startApp(){
+  const name = document.getElementById("name").value;
+  const city = document.getElementById("city").value;
+  const state = document.getElementById("state").value;
 
-  user = {
-    name: document.getElementById("name").value,
-    city: document.getElementById("city").value,
-    state: document.getElementById("state").value
-  };
+  if(!name || !city || !state){
+    alert("Fill all fields");
+    return;
+  }
 
+  user = {name, city, state};
   localStorage.setItem("user", JSON.stringify(user));
   openHome();
 }
 
 /* HOME */
 function openHome(){
-
   document.getElementById("onboard").style.display="none";
   document.getElementById("home").style.display="flex";
 
   document.getElementById("userInfo").innerText =
-    `👤 ${user.name} | 📍 ${user.city}`;
+    `${user.name} | ${user.city}`;
 
   document.getElementById("hero").style.backgroundImage =
-    `url('https://source.unsplash.com/1600x900/?${user.city},city,india')`;
-
-  document.getElementById("hero").innerText =
-    `Welcome to ${user.city} ❤️`;
+    `url('https://source.unsplash.com/1600x900/?${user.city},city')`;
 
   loadShops();
 }
 
 /* MODAL */
-function openModal(){ document.getElementById("modal").style.display="flex"; }
-function closeModal(){ document.getElementById("modal").style.display="none"; }
+function openModal(){
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
 
 /* UPLOAD IMAGE */
 function uploadImage(file, cb){
-
   let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
-
   ref.put(file).then(snap=>{
     snap.ref.getDownloadURL().then(cb);
   });
@@ -263,7 +226,7 @@ function uploadImage(file, cb){
 /* SAVE SHOP */
 function saveShop(){
 
-  let file = shopImage.files[0];
+  const file = document.getElementById("shopImage").files[0];
   if(!file){
     alert("Select image");
     return;
@@ -271,15 +234,15 @@ function saveShop(){
 
   uploadImage(file,(url)=>{
 
-    let shop = {
-      name:shopName.value,
-      type:shopType.value,
-      item:shopItem.value,
-      location:shopLocation.value,
-      contact:shopContact.value,
-      msg:shopMsg.value,
-      city:user.city,
-      image:url
+    const shop = {
+      name: document.getElementById("shopName").value,
+      type: document.getElementById("shopType").value,
+      item: document.getElementById("shopItem").value,
+      location: document.getElementById("shopLocation").value,
+      contact: document.getElementById("shopContact").value,
+      msg: document.getElementById("shopMsg").value,
+      city: user.city.toLowerCase(),
+      image: url
     };
 
     db.ref("shops").push(shop);
@@ -291,14 +254,12 @@ function saveShop(){
 
 /* LOAD */
 function loadShops(){
-
-  db.ref("shops").on("value",snap=>{
-
+  db.ref("shops").on("value", snap=>{
     shops = [];
 
     snap.forEach(s=>{
-      let d = s.val();
-      if(d.city && d.city.toLowerCase() === user.city.toLowerCase()){
+      const d = s.val();
+      if(d.city === user.city.toLowerCase()){
         shops.push(d);
       }
     });
@@ -310,20 +271,20 @@ function loadShops(){
 /* RENDER */
 function render(){
 
-  let q = document.getElementById("search").value.toLowerCase();
-  let list = document.getElementById("list");
+  const q = (document.getElementById("search").value || "").toLowerCase();
+  const list = document.getElementById("list");
 
-  let filtered = shops.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    s.type.toLowerCase().includes(q)
+  list.innerHTML = "";
+
+  const filtered = shops.filter(s =>
+    (s.name||"").toLowerCase().includes(q) ||
+    (s.type||"").toLowerCase().includes(q)
   );
 
   if(filtered.length === 0){
-    list.innerHTML = `<div class="card">No Shops Found 📍</div>`;
+    list.innerHTML = "<div class='card'>No Shops Found</div>";
     return;
   }
-
-  list.innerHTML = "";
 
   filtered.forEach(s=>{
     list.innerHTML += `
