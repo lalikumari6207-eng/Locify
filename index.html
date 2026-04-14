@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify </title>
+<title>Locify Pro</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+<!-- FIREBASE (FIXED V8) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <style>
 body {
@@ -33,6 +33,12 @@ body {
 .splash {
   font-size: 40px;
   font-weight: bold;
+  animation: fade 1.5s ease;
+}
+
+@keyframes fade {
+  from {opacity:0; transform:scale(0.5);}
+  to {opacity:1; transform:scale(1);}
 }
 
 .topbar {
@@ -89,7 +95,6 @@ button {
 
 <!-- HOME -->
 <div id="home" class="hidden">
-
   <div class="topbar" id="topbar">Loading...</div>
 
   <div style="padding:10px;">
@@ -116,7 +121,7 @@ button {
 
 <script>
 
-// FIREBASE CONFIG
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoYq2A",
   authDomain: "locify-57f73.firebaseapp.com",
@@ -132,21 +137,27 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const storage = firebase.storage();
 
-let userName="", userCity="", userState="";
+/* ================= DATA ================= */
+let userName = "";
+let userCity = "";
+let userState = "";
 let shops = [];
 
-// SPLASH
-setTimeout(()=>{
+/* ================= SPLASH ================= */
+setTimeout(() => {
   document.getElementById("splash").classList.add("hidden");
 
-  let user = JSON.parse(localStorage.getItem("user"));
+  let user = localStorage.getItem("user");
 
-  if(user){
+  if (user) {
+    user = JSON.parse(user);
+
     userName = user.userName;
     userCity = user.userCity;
     userState = user.userState;
 
     document.getElementById("home").classList.remove("hidden");
+
     document.getElementById("topbar").innerText =
       `👋 ${userName} | 📍 ${userCity}, ${userState}`;
 
@@ -154,14 +165,13 @@ setTimeout(()=>{
   } else {
     document.getElementById("onboard").classList.remove("hidden");
   }
-
 }, 2000);
 
-// SAVE USER
-function goHome(){
-  userName = name.value;
-  userCity = city.value;
-  userState = state.value;
+/* ================= USER ================= */
+function goHome() {
+  userName = document.getElementById("name").value;
+  userCity = document.getElementById("city").value;
+  userState = document.getElementById("state").value;
 
   localStorage.setItem("user", JSON.stringify({userName,userCity,userState}));
 
@@ -174,39 +184,38 @@ function goHome(){
   loadShops();
 }
 
-// SHOW ADD FORM
-function showAdd(){
+/* ================= ADD FORM ================= */
+function showAdd() {
   document.getElementById("addForm").classList.remove("hidden");
 }
 
-// IMAGE UPLOAD
-function uploadImage(file, cb){
-
+/* ================= IMAGE UPLOAD ================= */
+function uploadImage(file, cb) {
   let ref = storage.ref("shops/" + file.name);
   let task = ref.put(file);
 
   task.on("state_changed",
     null,
-    (e)=>console.log(e),
-    ()=>{
-      task.snapshot.ref.getDownloadURL().then(url=>{
+    (err) => console.log(err),
+    () => {
+      task.snapshot.ref.getDownloadURL().then(url => {
         cb(url);
       });
     }
   );
 }
 
-// SAVE SHOP
-function saveShop(){
+/* ================= SAVE SHOP ================= */
+function saveShop() {
 
   let file = document.getElementById("shopImage").files[0];
 
-  if(!file){
-    alert("Select image");
+  if (!file) {
+    alert("Please select image");
     return;
   }
 
-  uploadImage(file, (url)=>{
+  uploadImage(file, (url) => {
 
     let shop = {
       name: shopName.value,
@@ -226,16 +235,16 @@ function saveShop(){
   });
 }
 
-// LOAD SHOPS
-function loadShops(){
+/* ================= LOAD SHOPS ================= */
+function loadShops() {
 
-  db.ref("shops").on("value", snap=>{
+  db.ref("shops").on("value", snap => {
     shops = [];
 
-    snap.forEach(child=>{
+    snap.forEach(child => {
       let data = child.val();
 
-      if(data.city.toLowerCase() === userCity.toLowerCase()){
+      if (data.city && data.city.toLowerCase() === userCity.toLowerCase()) {
         shops.push(data);
       }
     });
@@ -244,8 +253,8 @@ function loadShops(){
   });
 }
 
-// RENDER
-function renderList(){
+/* ================= RENDER ================= */
+function renderList() {
 
   let search = document.getElementById("search").value.toLowerCase();
   let list = document.getElementById("list");
@@ -257,7 +266,7 @@ function renderList(){
     s.type.toLowerCase().includes(search)
   );
 
-  filtered.forEach(item=>{
+  filtered.forEach(item => {
     list.innerHTML += `
       <div class="card">
         <img src="${item.image}">
