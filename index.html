@@ -9,13 +9,13 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <style>
-
 body{
   margin:0;
   font-family:Poppins;
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
   color:white;
 }
 
@@ -31,13 +31,12 @@ body{
 .splash{
   font-size:45px;
   font-weight:bold;
-  color:white;
-  animation: zoom 1.5s ease;
+  animation:zoom 1.5s ease;
 }
 
 @keyframes zoom{
-  from{opacity:0; transform:scale(0.5);}
-  to{opacity:1; transform:scale(1);}
+  from{opacity:0;transform:scale(0.5);}
+  to{opacity:1;transform:scale(1);}
 }
 
 .hidden{display:none;}
@@ -53,13 +52,12 @@ body{
 }
 
 /* INPUT */
-input, textarea{
+input,textarea{
   width:90%;
   padding:12px;
   margin:6px;
   border:none;
   border-radius:10px;
-  outline:none;
 }
 
 /* BUTTON */
@@ -70,20 +68,14 @@ button{
   background:linear-gradient(45deg,#00c6ff,#0072ff);
   color:white;
   cursor:pointer;
-  margin:5px;
-}
-
-button:hover{
-  transform:scale(1.05);
 }
 
 /* CARD */
 .card{
   background:rgba(255,255,255,0.1);
-  padding:15px;
   margin:10px;
+  padding:15px;
   border-radius:15px;
-  backdrop-filter:blur(10px);
 }
 
 .card img{
@@ -91,33 +83,27 @@ button:hover{
   border-radius:10px;
 }
 
-/* BACKGROUND HERO */
+/* HERO */
 .hero{
-  height:150px;
-  background:url("https://images.unsplash.com/photo-1508057198894-247b23fe5ade");
-  background-size:cover;
-  border-radius:15px;
   margin:10px;
-  display:flex;
-  align-items:flex-end;
-  padding:10px;
-  font-weight:bold;
+  padding:15px;
+  border-radius:15px;
+  background:linear-gradient(45deg,#ff512f,#dd2476);
 }
-
 </style>
 </head>
 
 <body>
 
 <!-- SPLASH -->
-<div id="splash" class="center splash">Locify</div>
+<div id="splash" class="center splash">LOCIFY</div>
 
 <!-- ONBOARD -->
 <div id="onboard" class="center hidden">
   <h2>Welcome 👋</h2>
-  <input id="name" placeholder="Enter your name">
-  <input id="city" placeholder="Enter city">
-  <input id="state" placeholder="Enter state">
+  <input id="name" placeholder="Your Name">
+  <input id="city" placeholder="City">
+  <input id="state" placeholder="State">
   <button onclick="startApp()">Continue</button>
 </div>
 
@@ -126,14 +112,15 @@ button:hover{
 
   <div class="topbar">
     <div id="userText"></div>
-    <button onclick="showAdd()">➕</button>
+    <button onclick="showAdd()">➕ Add</button>
   </div>
 
-  <div class="hero" id="heroText">Discover your city</div>
+  <div class="hero" id="hero">
+    Discover Best Shops Near You 🔥
+  </div>
 
   <div style="padding:10px;">
     <input id="search" placeholder="Search shops..." onkeyup="render()">
-
     <div id="list"></div>
   </div>
 
@@ -145,12 +132,11 @@ button:hover{
   <h2>Add Shop 🏪</h2>
 
   <input id="shopName" placeholder="Shop Name">
-  <input id="shopType" placeholder="Shop Type">
-  <input id="shopItem" placeholder="What they sell">
+  <input id="shopType" placeholder="Type">
+  <input id="shopItem" placeholder="Item">
   <input id="shopLocation" placeholder="Location">
   <input id="shopContact" placeholder="Contact">
   <textarea id="shopMsg" placeholder="Description"></textarea>
-
   <input type="file" id="shopImage">
 
   <button onclick="saveShop()">Upload Shop</button>
@@ -164,30 +150,14 @@ const firebaseConfig = {
   apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoYq2A",
   authDomain: "locify-57f73.firebaseapp.com",
   databaseURL: "https://locify-57f73-default-rtdb.firebaseio.com",
-  projectId: "locify-57f73"
+  projectId: "locify-57f73",
+  storageBucket: "locify-57f73.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
-  function uploadImage(file, callback){
-
-  let storageRef = storage.ref("shops/" + Date.now() + "_" + file.name);
-
-  let uploadTask = storageRef.put(file);
-
-  uploadTask.on("state_changed",
-
-    null,
-    (error)=> console.log(error),
-
-    ()=> {
-      uploadTask.snapshot.ref.getDownloadURL().then(url=>{
-        callback(url);
-      });
-    }
-
-  );
-  }
+const storage = firebase.storage();
 
 /* DATA */
 let userName="", userCity="", userState="";
@@ -199,26 +169,28 @@ setTimeout(()=>{
 
   let user = localStorage.getItem("user");
 
-  if(!user){
-    document.getElementById("onboard").classList.remove("hidden");
-  }else{
+  if(user){
     user = JSON.parse(user);
-    userName=user.userName;
-    userCity=user.userCity;
-    userState=user.userState;
+    userName=user.name;
+    userCity=user.city;
+    userState=user.state;
     openHome();
+  } else {
+    document.getElementById("onboard").classList.remove("hidden");
   }
-
 },2000);
 
 /* START */
 function startApp(){
+  userName = name.value;
+  userCity = city.value;
+  userState = state.value;
 
-  userName=document.getElementById("name").value;
-  userCity=document.getElementById("city").value;
-  userState=document.getElementById("state").value;
-
-  localStorage.setItem("user",JSON.stringify({userName,userCity,userState}));
+  localStorage.setItem("user", JSON.stringify({
+    name:userName,
+    city:userCity,
+    state:userState
+  }));
 
   openHome();
 }
@@ -228,72 +200,76 @@ function openHome(){
   document.getElementById("onboard").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
-  document.getElementById("userText").innerHTML =
-    `👤 ${userName} | 📍 ${userCity}`;
+  document.getElementById("userText").innerText =
+    `👤 ${userName} | 📍 ${userCity}, ${userState}`;
 
-  document.getElementById("heroText").innerText =
-    "Welcome to " + userCity + " ❤️";
+  document.getElementById("hero").innerText =
+    `Welcome to ${userCity} ❤️ Explore Shops`;
 
   loadShops();
 }
 
-/* ADD FORM */
+/* ADD */
 function showAdd(){
   document.getElementById("addForm").classList.remove("hidden");
 }
 
+/* IMAGE UPLOAD */
+function uploadImage(file, cb){
+  let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
+  ref.put(file).then(snap=>{
+    snap.ref.getDownloadURL().then(cb);
+  });
+}
+
 /* SAVE SHOP */
-  function saveShop(){
+function saveShop(){
 
-  let file = document.getElementById("shopImage").files[0];
-
+  let file = shopImage.files[0];
   if(!file){
-    alert("Please select shop image");
+    alert("Select image");
     return;
   }
 
-  uploadImage(file, (imageUrl)=>{
+  uploadImage(file,(url)=>{
 
-    let shop = {
-      name: shopName.value,
-      type: shopType.value,
-      item: shopItem.value,
-      location: shopLocation.value,
-      contact: shopContact.value,
-      msg: shopMsg.value,
-      city: userCity,
-      image: imageUrl
+    let shop={
+      name:shopName.value,
+      type:shopType.value,
+      item:shopItem.value,
+      location:shopLocation.value,
+      contact:shopContact.value,
+      msg:shopMsg.value,
+      city:userCity,
+      image:url
     };
 
-  db.ref("shops").push(shop);
+    db.ref("shops").push(shop);
 
-  alert("Shop Added 🚀");
+    alert("Shop Added 🚀");
 
-  document.getElementById("addForm").classList.add("hidden");
+    document.getElementById("addForm").classList.add("hidden");
+  });
 }
 
 /* LOAD */
 function loadShops(){
-
   db.ref("shops").on("value",snap=>{
     shops=[];
-
     snap.forEach(s=>{
       let d=s.val();
-      if(d.city==userCity){
+      if(d.city===userCity){
         shops.push(d);
       }
     });
-
     render();
   });
-
 }
 
 /* RENDER */
-    function render(){
+function render(){
 
-  let q = document.getElementById("search").value.toLowerCase();
+  let q = search.value.toLowerCase();
   let list = document.getElementById("list");
 
   let filtered = shops.filter(s =>
@@ -301,55 +277,31 @@ function loadShops(){
     s.type.toLowerCase().includes(q)
   );
 
-  if(filtered.length === 0){
+  list.innerHTML="";
+
+  if(filtered.length===0){
     list.innerHTML = `
       <div class="card">
-        <h3>No shops found 📍</h3>
-        <p>Add first shop in ${userCity}</p>
+        <h3>No Shops Found 📍</h3>
+        <p>Add first shop in your city</p>
       </div>
     `;
     return;
   }
-
-  list.innerHTML = "";
-
-  filtered.forEach(s => {
-    list.innerHTML += `
-      <div class="card">
-
-        <img src="${s.image}" style="width:100%;border-radius:12px;margin-bottom:10px;">
-
-        <h3>${s.name}</h3>
-        <p>🏷️ ${s.type}</p>
-        <p>🛍️ ${s.item}</p>
-        <p>📍 ${s.location}</p>
-        <p>📞 ${s.contact}</p>
-        <p>${s.msg}</p>
-
-      </div>
-    `;
-  });
-
-    }
-    `;
-    return;
-  }
-
-  list.innerHTML="";
 
   filtered.forEach(s=>{
     list.innerHTML+=`
       <div class="card">
+        <img src="${s.image}">
         <h3>${s.name}</h3>
-        <p>🏷️ ${s.type}</p>
-        <p>🛍️ ${s.item}</p>
-        <p>📍 ${s.location}</p>
-        <p>📞 ${s.contact}</p>
+        <p>${s.type}</p>
+        <p>${s.item}</p>
+        <p>${s.location}</p>
+        <p>${s.contact}</p>
         <p>${s.msg}</p>
       </div>
     `;
   });
-
 }
 
 </script>
