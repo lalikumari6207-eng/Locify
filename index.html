@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify App</title>
+<title>Locify Next Level</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
@@ -15,13 +15,12 @@
 body{
   margin:0;
   font-family:Poppins;
-  background:#0f172a;
+  background: linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
   color:white;
   overflow:hidden;
 }
 
-.hidden{display:none;}
-
+/* SPLASH */
 .center{
   display:flex;
   justify-content:center;
@@ -31,8 +30,14 @@ body{
 }
 
 .splash{
-  font-size:42px;
-  font-weight:bold;
+  font-size:48px;
+  font-weight:800;
+  animation: zoom 1.5s ease;
+}
+
+@keyframes zoom{
+  from{transform:scale(0.5);opacity:0;}
+  to{transform:scale(1);opacity:1;}
 }
 
 /* SCREEN */
@@ -49,6 +54,7 @@ body{
   align-items:center;
   padding:12px;
   background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(10px);
 }
 
 /* HERO */
@@ -60,6 +66,7 @@ body{
   display:flex;
   align-items:flex-end;
   padding:10px;
+  font-weight:bold;
 }
 
 /* FEED */
@@ -80,6 +87,16 @@ body{
 .card img{
   width:100%;
   border-radius:10px;
+}
+
+/* BUTTON */
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  background:#3b82f6;
+  color:white;
+  cursor:pointer;
 }
 
 /* MODAL */
@@ -109,14 +126,6 @@ input,textarea{
   border:none;
   border-radius:8px;
 }
-
-button{
-  padding:8px 12px;
-  border:none;
-  border-radius:10px;
-  background:#3b82f6;
-  color:white;
-}
 </style>
 </head>
 
@@ -144,7 +153,7 @@ button{
     <div id="userInfo"></div>
   </div>
 
-  <div class="hero" id="hero">Loading...</div>
+  <div class="hero" id="hero">Loading city...</div>
 
   <div class="feed">
     <input id="search" placeholder="Search shops..." onkeyup="render()">
@@ -164,7 +173,7 @@ button{
     <input id="shopItem" placeholder="Item">
     <input id="shopLocation" placeholder="Location">
     <input id="shopContact" placeholder="Contact">
-    <textarea id="shopMsg" placeholder="Message"></textarea>
+    <textarea id="shopMsg" placeholder="Description"></textarea>
     <input type="file" id="shopImage">
 
     <button onclick="saveShop()">Upload</button>
@@ -196,7 +205,7 @@ let shops = [];
 setTimeout(()=>{
   document.getElementById("splash").style.display="none";
 
-  let data = localStorage.getItem("user");
+  const data = localStorage.getItem("user");
 
   if(!data){
     document.getElementById("onboard").style.display="flex";
@@ -210,13 +219,12 @@ setTimeout(()=>{
 function startApp(){
 
   user = {
-    name:name.value,
-    city:city.value,
-    state:state.value
+    name: document.getElementById("name").value,
+    city: document.getElementById("city").value,
+    state: document.getElementById("state").value
   };
 
-  localStorage.setItem("user",JSON.stringify(user));
-
+  localStorage.setItem("user", JSON.stringify(user));
   openHome();
 }
 
@@ -230,21 +238,19 @@ function openHome(){
     `👤 ${user.name} | 📍 ${user.city}`;
 
   document.getElementById("hero").style.backgroundImage =
-    `url('https://source.unsplash.com/1600x900/?${user.city},india,city')`;
+    `url('https://source.unsplash.com/1600x900/?${user.city},city,india')`;
+
+  document.getElementById("hero").innerText =
+    `Welcome to ${user.city} ❤️`;
 
   loadShops();
 }
 
 /* MODAL */
-function openModal(){
-  document.getElementById("modal").style.display="flex";
-}
+function openModal(){ document.getElementById("modal").style.display="flex"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; }
 
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-/* IMAGE UPLOAD */
+/* UPLOAD IMAGE */
 function uploadImage(file, cb){
 
   let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
@@ -258,7 +264,10 @@ function uploadImage(file, cb){
 function saveShop(){
 
   let file = shopImage.files[0];
-  if(!file) return alert("Select image");
+  if(!file){
+    alert("Select image");
+    return;
+  }
 
   uploadImage(file,(url)=>{
 
@@ -276,7 +285,6 @@ function saveShop(){
     db.ref("shops").push(shop);
 
     alert("Shop Added 🚀");
-
     closeModal();
   });
 }
@@ -311,12 +319,7 @@ function render(){
   );
 
   if(filtered.length === 0){
-    list.innerHTML = `
-      <div class="card">
-        <h3>No Shops Found 📍</h3>
-        <p>Add your first shop in ${user.city}</p>
-      </div>
-    `;
+    list.innerHTML = `<div class="card">No Shops Found 📍</div>`;
     return;
   }
 
