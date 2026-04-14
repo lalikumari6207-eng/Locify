@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify Pro</title>
+<title>Locify </title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
@@ -15,29 +15,29 @@
 body{
   margin:0;
   font-family:Poppins;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  background:#0f172a;
   color:white;
+  overflow:hidden; /* IMPORTANT = no page scroll */
 }
 
-.hidden{display:none;}
-
+/* SPLASH */
 .center{
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
-  flex-direction:column;
 }
 
 .splash{
-  font-size:45px;
+  font-size:40px;
   font-weight:bold;
-  animation:zoom 1.5s ease;
 }
 
-@keyframes zoom{
-  from{opacity:0;transform:scale(0.5);}
-  to{opacity:1;transform:scale(1);}
+/* SCREEN */
+.screen{
+  display:none;
+  height:100vh;
+  flex-direction:column;
 }
 
 /* TOPBAR */
@@ -45,56 +45,77 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:15px;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(10px);
+  padding:12px;
+  background:rgba(255,255,255,0.08);
 }
 
 /* HERO */
 .hero{
-  height:160px;
+  height:120px;
   margin:10px;
   border-radius:15px;
   background-size:cover;
-  background-position:center;
   display:flex;
   align-items:flex-end;
   padding:10px;
   font-weight:bold;
 }
 
-/* INPUT */
-input,textarea{
-  width:90%;
-  padding:12px;
-  margin:6px;
-  border:none;
-  border-radius:10px;
-  outline:none;
-}
-
-/* BUTTON */
-button{
-  padding:10px 15px;
-  border:none;
-  border-radius:20px;
-  background:linear-gradient(45deg,#00c6ff,#0072ff);
-  color:white;
-  cursor:pointer;
+/* FEED */
+.feed{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
 }
 
 /* CARD */
 .card{
-  background:rgba(255,255,255,0.1);
-  margin:10px;
-  padding:15px;
-  border-radius:15px;
-  backdrop-filter:blur(10px);
+  background:rgba(255,255,255,0.08);
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:12px;
 }
 
 .card img{
   width:100%;
   border-radius:10px;
+}
+
+/* BUTTON */
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  background:#3b82f6;
+  color:white;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:#111827;
+  padding:15px;
+  border-radius:12px;
+  width:90%;
+}
+
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:none;
 }
 </style>
 </head>
@@ -105,45 +126,50 @@ button{
 <div id="splash" class="center splash">LOCIFY</div>
 
 <!-- ONBOARD -->
-<div id="onboard" class="center hidden">
-  <h2>Welcome 👋</h2>
-  <input id="name" placeholder="Name">
-  <input id="city" placeholder="City">
-  <input id="state" placeholder="State">
-  <button onclick="startApp()">Continue</button>
+<div id="onboard" class="screen center">
+  <div>
+    <h2>Welcome 👋</h2>
+    <input id="name" placeholder="Name">
+    <input id="city" placeholder="City">
+    <input id="state" placeholder="State">
+    <button onclick="startApp()">Continue</button>
+  </div>
 </div>
 
 <!-- HOME -->
-<div id="home" class="hidden">
+<div id="home" class="screen">
 
+  <!-- TOPBAR -->
   <div class="topbar">
-    <div id="userText"></div>
-    <button onclick="showAdd()">➕</button>
+    <button onclick="openModal()">➕ Add Shop</button>
+    <div id="userInfo"></div>
   </div>
 
-  <div class="hero" id="hero">Loading...</div>
+  <!-- HERO -->
+  <div class="hero" id="hero">Loading city...</div>
 
-  <div style="padding:10px;">
-    <input id="search" placeholder="Search shops..." onkeyup="render()">
-    <div id="list"></div>
-  </div>
+  <!-- FEED -->
+  <div class="feed" id="feed"></div>
 </div>
 
-<!-- ADD SHOP -->
-<div id="addForm" class="center hidden">
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
 
-  <h2>Add Shop 🏪</h2>
+    <h3>Add Shop 🏪</h3>
 
-  <input id="shopName" placeholder="Shop Name">
-  <input id="shopType" placeholder="Type">
-  <input id="shopItem" placeholder="Item">
-  <input id="shopLocation" placeholder="Location">
-  <input id="shopContact" placeholder="Contact">
-  <textarea id="shopMsg" placeholder="Description"></textarea>
+    <input id="shopName" placeholder="Shop Name">
+    <input id="shopType" placeholder="Type">
+    <input id="shopItem" placeholder="Item">
+    <input id="shopLocation" placeholder="Location">
+    <input id="shopContact" placeholder="Contact">
+    <textarea id="shopMsg" placeholder="Description"></textarea>
+    <input type="file" id="shopImage">
 
-  <input type="file" id="shopImage">
+    <button onclick="saveShop()">Upload</button>
+    <button onclick="closeModal()">Close</button>
 
-  <button onclick="saveShop()">Upload Shop</button>
+  </div>
 </div>
 
 <script>
@@ -158,70 +184,63 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 const storage = firebase.storage();
 
-/* DATA */
-let userName="", userCity="", userState="";
+let user;
 
 /* SPLASH */
 setTimeout(()=>{
+  document.getElementById("splash").style.display="none";
 
-  document.getElementById("splash").classList.add("hidden");
-
-  let user = JSON.parse(localStorage.getItem("user"));
+  user = JSON.parse(localStorage.getItem("user"));
 
   if(!user){
-    document.getElementById("onboard").classList.remove("hidden");
+    document.getElementById("onboard").style.display="flex";
   } else {
-    startHome(user);
+    openHome();
   }
-
 },2000);
 
 /* START */
 function startApp(){
-
-  let user = {
-    name: name.value,
-    city: city.value,
-    state: state.value
+  user = {
+    name:name.value,
+    city:city.value,
+    state:state.value
   };
 
-  localStorage.setItem("user", JSON.stringify(user));
-  startHome(user);
+  localStorage.setItem("user",JSON.stringify(user));
+  openHome();
 }
 
 /* HOME */
-function startHome(user){
+function openHome(){
 
-  userName = user.name;
-  userCity = user.city;
-  userState = user.state;
+  document.getElementById("onboard").style.display="none";
+  document.getElementById("home").style.display="flex";
 
-  document.getElementById("onboard").classList.add("hidden");
-  document.getElementById("home").classList.remove("hidden");
-
-  document.getElementById("userText").innerText =
-    `👤 ${userName} | 📍 ${userCity}, ${userState}`;
+  document.getElementById("userInfo").innerText =
+    `${user.name} | ${user.city}`;
 
   document.getElementById("hero").style.backgroundImage =
-    `url('https://source.unsplash.com/1600x900/?${userCity},india,city')`;
-
-  document.getElementById("hero").innerText =
-    `Welcome to ${userCity} ❤️`;
+    `url('https://source.unsplash.com/1600x900/?${user.city},india,city')`;
 
   loadShops();
 }
 
-/* ADD */
-function showAdd(){
-  document.getElementById("addForm").classList.remove("hidden");
+/* MODAL */
+function openModal(){
+  document.getElementById("modal").style.display="flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
 }
 
 /* UPLOAD IMAGE */
 function uploadImage(file, cb){
+
   let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
 
   ref.put(file).then(snap=>{
@@ -233,31 +252,26 @@ function uploadImage(file, cb){
 function saveShop(){
 
   let file = shopImage.files[0];
-  if(!file){
-    alert("Select image");
-    return;
-  }
+  if(!file) return alert("Select image");
 
   uploadImage(file,(url)=>{
 
     let shop = {
-      name: shopName.value,
-      type: shopType.value,
-      item: shopItem.value,
-      location: shopLocation.value,
-      contact: shopContact.value,
-      msg: shopMsg.value,
-      city: userCity,
-      image: url
+      name:shopName.value,
+      type:shopType.value,
+      item:shopItem.value,
+      location:shopLocation.value,
+      contact:shopContact.value,
+      msg:shopMsg.value,
+      city:user.city,
+      image:url
     };
 
     db.ref("shops").push(shop);
 
     alert("Shop Added 🚀");
 
-    document.getElementById("addForm").classList.add("hidden");
-
-    loadShops();
+    closeModal();
   });
 }
 
@@ -266,54 +280,28 @@ function loadShops(){
 
   db.ref("shops").on("value",snap=>{
 
-    let shops = [];
+    let feed = document.getElementById("feed");
+    feed.innerHTML="";
 
     snap.forEach(s=>{
-      let d = s.val();
-      if(d.city && d.city.toLowerCase() === userCity.toLowerCase()){
-        shops.push(d);
+
+      let d=s.val();
+
+      if(d.city===user.city){
+
+        feed.innerHTML+=`
+          <div class="card">
+            <img src="${d.image}">
+            <h3>${d.name}</h3>
+            <p>${d.type}</p>
+            <p>${d.item}</p>
+            <p>${d.location}</p>
+            <p>${d.contact}</p>
+            <p>${d.msg}</p>
+          </div>
+        `;
       }
     });
-
-    render(shops);
-  });
-}
-
-/* RENDER */
-function render(shops=[]){
-
-  let q = search.value ? search.value.toLowerCase() : "";
-  let list = document.getElementById("list");
-
-  let filtered = shops.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    s.type.toLowerCase().includes(q)
-  );
-
-  if(filtered.length===0){
-    list.innerHTML = `
-      <div class="card">
-        <h3>No Shops Yet 📍</h3>
-        <p>Be first to add shop in ${userCity}</p>
-      </div>
-    `;
-    return;
-  }
-
-  list.innerHTML="";
-
-  filtered.forEach(s=>{
-    list.innerHTML+=`
-      <div class="card">
-        <img src="${s.image}">
-        <h3>${s.name}</h3>
-        <p>${s.type}</p>
-        <p>${s.item}</p>
-        <p>${s.location}</p>
-        <p>${s.contact}</p>
-        <p>${s.msg}</p>
-      </div>
-    `;
   });
 }
 
@@ -321,4 +309,3 @@ function render(shops=[]){
 
 </body>
 </html>
-
