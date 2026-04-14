@@ -3,9 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locify Pro</title>
+<title>Locify </title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
 
 <style>
 body {
@@ -23,74 +28,47 @@ body {
   flex-direction:column;
 }
 
-.splash {
-  font-size: 42px;
-  font-weight: bold;
-  letter-spacing: 3px;
-  animation: fadeZoom 2s ease-in-out;
-}
-
-@keyframes fadeZoom {
-  0% {opacity:0; transform:scale(0.5);}
-  100% {opacity:1; transform:scale(1);}
-}
-
 .hidden { display:none; }
+
+.splash {
+  font-size: 40px;
+  font-weight: bold;
+}
 
 .topbar {
   background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
   padding: 15px;
-  font-size: 16px;
+  backdrop-filter: blur(10px);
 }
 
 input {
   padding: 12px;
   width: 90%;
   margin: 8px;
-  border-radius: 12px;
+  border-radius: 10px;
   border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
 }
 
 button {
   padding: 10px 15px;
   border-radius: 20px;
   border: none;
-  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+  background: #ff4b2b;
   color: white;
   cursor: pointer;
-  margin:5px;
-  transition: 0.3s;
-}
-
-button:hover {
-  transform: scale(1.05);
+  margin: 5px;
 }
 
 .card {
   background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
   margin: 15px;
   padding: 15px;
-  border-radius: 20px;
-  animation: slideUp 0.5s ease;
-}
-
-@keyframes slideUp {
-  from {transform:translateY(20px); opacity:0;}
-  to {transform:translateY(0); opacity:1;}
+  border-radius: 15px;
 }
 
 .card img {
-  width:100%;
-  border-radius:15px;
-}
-
-.fav {
-  font-size:22px;
-  cursor:pointer;
+  width: 100%;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -102,92 +80,176 @@ button:hover {
 
 <!-- ONBOARD -->
 <div id="onboard" class="center hidden">
-  <h2>Welcome to Locify</h2>
-  <input id="name" placeholder="Enter your name">
-  <input id="city" placeholder="Enter your city">
-  <input id="state" placeholder="Enter your state">
-  <button onclick="goHome()">Enter App</button>
+  <h2>Enter Details</h2>
+  <input id="name" placeholder="Name">
+  <input id="city" placeholder="City">
+  <input id="state" placeholder="State">
+  <button onclick="goHome()">Enter</button>
 </div>
 
 <!-- HOME -->
 <div id="home" class="hidden">
-  <div class="topbar" id="locationText">📍 Loading...</div>
+
+  <div class="topbar" id="topbar">Loading...</div>
 
   <div style="padding:10px;">
     <input id="search" placeholder="Search shops..." onkeyup="renderList()">
-    <button onclick="showFavorites()">❤️ Favorites</button>
-    <button onclick="loadShops()">🏠 Home</button>
+
+    <button onclick="showAdd()">➕ Add Shop</button>
+
     <div id="list"></div>
   </div>
 </div>
 
+<!-- ADD SHOP -->
+<div id="addForm" class="center hidden">
+  <h2>Add Shop</h2>
+
+  <input id="shopName" placeholder="Shop Name">
+  <input id="shopType" placeholder="Type">
+  <input id="shopCity" placeholder="City">
+  <input id="shopPhone" placeholder="Phone">
+  <input type="file" id="shopImage">
+
+  <button onclick="saveShop()">Save Shop</button>
+</div>
+
 <script>
 
-let userName = "";
-let userCity = "";
-let userState = "";
+// FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyBLjvPcy9ypN_nkx2vXcTu9A4YiYMoYq2A",
+  authDomain: "locify-57f73.firebaseapp.com",
+  databaseURL: "https://locify-57f73-default-rtdb.firebaseio.com",
+  projectId: "locify-57f73",
+  storageBucket: "locify-57f73.appspot.com",
+  messagingSenderId: "231657948871",
+  appId: "1:231657948871:web:7bc39f030cb51b285920e2"
+};
 
-let favorites = JSON.parse(localStorage.getItem("fav")) || [];
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+const storage = firebase.storage();
+
+let userName="", userCity="", userState="";
 let shops = [];
 
-// AUTO SPLASH
-setTimeout(startApp, 3000);
-
-function startApp(){
+// SPLASH
+setTimeout(()=>{
   document.getElementById("splash").classList.add("hidden");
 
-  let savedUser = JSON.parse(localStorage.getItem("user"));
+  let user = JSON.parse(localStorage.getItem("user"));
 
-  if(savedUser){
-    userName = savedUser.userName;
-    userCity = savedUser.userCity;
-    userState = savedUser.userState;
+  if(user){
+    userName = user.userName;
+    userCity = user.userCity;
+    userState = user.userState;
 
     document.getElementById("home").classList.remove("hidden");
-    updateTopbar();
+    document.getElementById("topbar").innerText =
+      `👋 ${userName} | 📍 ${userCity}, ${userState}`;
+
     loadShops();
   } else {
     document.getElementById("onboard").classList.remove("hidden");
   }
-}
 
-// GO HOME AFTER INPUT
+}, 2000);
+
+// SAVE USER
 function goHome(){
-  userName = document.getElementById("name").value;
-  userCity = document.getElementById("city").value;
-  userState = document.getElementById("state").value;
+  userName = name.value;
+  userCity = city.value;
+  userState = state.value;
 
-  localStorage.setItem("user", JSON.stringify({userName, userCity, userState}));
+  localStorage.setItem("user", JSON.stringify({userName,userCity,userState}));
 
   document.getElementById("onboard").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
-  updateTopbar();
+  document.getElementById("topbar").innerText =
+    `👋 ${userName} | 📍 ${userCity}, ${userState}`;
+
   loadShops();
 }
 
-// TOPBAR UPDATE
-function updateTopbar(){
-  document.getElementById("locationText").innerText =
-    `👋 ${userName} | 📍 ${userCity}, ${userState}`;
+// SHOW ADD FORM
+function showAdd(){
+  document.getElementById("addForm").classList.remove("hidden");
+}
+
+// IMAGE UPLOAD
+function uploadImage(file, cb){
+
+  let ref = storage.ref("shops/" + file.name);
+  let task = ref.put(file);
+
+  task.on("state_changed",
+    null,
+    (e)=>console.log(e),
+    ()=>{
+      task.snapshot.ref.getDownloadURL().then(url=>{
+        cb(url);
+      });
+    }
+  );
+}
+
+// SAVE SHOP
+function saveShop(){
+
+  let file = document.getElementById("shopImage").files[0];
+
+  if(!file){
+    alert("Select image");
+    return;
+  }
+
+  uploadImage(file, (url)=>{
+
+    let shop = {
+      name: shopName.value,
+      type: shopType.value,
+      city: shopCity.value,
+      phone: shopPhone.value,
+      image: url
+    };
+
+    db.ref("shops").push(shop);
+
+    alert("Shop Added 🚀");
+
+    document.getElementById("addForm").classList.add("hidden");
+
+    loadShops();
+  });
 }
 
 // LOAD SHOPS
 function loadShops(){
-  shops = [
-    {id:1,name:"Fashion Hub",type:"Clothing",img:"https://images.unsplash.com/photo-1521334884684-d80222895322"},
-    {id:2,name:"Shoe Palace",type:"Shoes",img:"https://images.unsplash.com/photo-1528701800489-20be3c2eaebf"},
-    {id:3,name:"Food Corner",type:"Restaurant",img:"https://images.unsplash.com/photo-1504674900247-0877df9cc836"},
-    {id:4,name:"Mobile World",type:"Electronics",img:"https://images.unsplash.com/photo-1510552776732-01acc1e2f5f7"}
-  ];
 
-  renderList();
+  db.ref("shops").on("value", snap=>{
+    shops = [];
+
+    snap.forEach(child=>{
+      let data = child.val();
+
+      if(data.city.toLowerCase() === userCity.toLowerCase()){
+        shops.push(data);
+      }
+    });
+
+    renderList();
+  });
 }
 
 // RENDER
 function renderList(){
+
   let search = document.getElementById("search").value.toLowerCase();
   let list = document.getElementById("list");
+
   list.innerHTML = "";
 
   let filtered = shops.filter(s =>
@@ -195,58 +257,13 @@ function renderList(){
     s.type.toLowerCase().includes(search)
   );
 
-  filtered.forEach((item, index)=>{
-    let isFav = favorites.includes(item.id);
-
-    setTimeout(()=>{
-      list.innerHTML += `
-        <div class="card">
-          <img src="${item.img}">
-          <h3>${item.name}</h3>
-          <p>${item.type}</p>
-
-          <span class="fav" onclick="toggleFav(${item.id})">
-            ${isFav ? "❤️" : "🤍"}
-          </span>
-
-          <br>
-          <button onclick="openMap('${item.name}')">🗺️ Open Map</button>
-        </div>
-      `;
-    }, index * 150);
-  });
-}
-
-// MAP
-function openMap(name){
-  window.open(`https://www.google.com/maps/search/${name}+near+${userCity}`);
-}
-
-// FAVORITE
-function toggleFav(id){
-  if(favorites.includes(id)){
-    favorites = favorites.filter(f=>f!==id);
-  } else {
-    favorites.push(id);
-  }
-
-  localStorage.setItem("fav", JSON.stringify(favorites));
-  renderList();
-}
-
-// SHOW FAVORITES
-function showFavorites(){
-  let list = document.getElementById("list");
-  list.innerHTML = "";
-
-  let favItems = shops.filter(s=>favorites.includes(s.id));
-
-  favItems.forEach(item=>{
+  filtered.forEach(item=>{
     list.innerHTML += `
       <div class="card">
-        <img src="${item.img}">
+        <img src="${item.image}">
         <h3>${item.name}</h3>
-        <button onclick="openMap('${item.name}')">🗺️ Open Map</button>
+        <p>${item.type}</p>
+        <p>${item.phone}</p>
       </div>
     `;
   });
