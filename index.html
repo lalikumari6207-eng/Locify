@@ -19,7 +19,8 @@ body{
   color:white;
 }
 
-/* SPLASH */
+.hidden{display:none;}
+
 .center{
   display:flex;
   justify-content:center;
@@ -39,8 +40,6 @@ body{
   to{opacity:1;transform:scale(1);}
 }
 
-.hidden{display:none;}
-
 /* TOPBAR */
 .topbar{
   display:flex;
@@ -51,6 +50,19 @@ body{
   backdrop-filter:blur(10px);
 }
 
+/* HERO */
+.hero{
+  height:160px;
+  margin:10px;
+  border-radius:15px;
+  background-size:cover;
+  background-position:center;
+  display:flex;
+  align-items:flex-end;
+  padding:10px;
+  font-weight:bold;
+}
+
 /* INPUT */
 input,textarea{
   width:90%;
@@ -58,6 +70,7 @@ input,textarea{
   margin:6px;
   border:none;
   border-radius:10px;
+  outline:none;
 }
 
 /* BUTTON */
@@ -76,19 +89,12 @@ button{
   margin:10px;
   padding:15px;
   border-radius:15px;
+  backdrop-filter:blur(10px);
 }
 
 .card img{
   width:100%;
   border-radius:10px;
-}
-
-/* HERO */
-.hero{
-  margin:10px;
-  padding:15px;
-  border-radius:15px;
-  background:linear-gradient(45deg,#ff512f,#dd2476);
 }
 </style>
 </head>
@@ -101,7 +107,7 @@ button{
 <!-- ONBOARD -->
 <div id="onboard" class="center hidden">
   <h2>Welcome 👋</h2>
-  <input id="name" placeholder="Your Name">
+  <input id="name" placeholder="Name">
   <input id="city" placeholder="City">
   <input id="state" placeholder="State">
   <button onclick="startApp()">Continue</button>
@@ -112,18 +118,15 @@ button{
 
   <div class="topbar">
     <div id="userText"></div>
-    <button onclick="showAdd()">➕ Add</button>
+    <button onclick="showAdd()">➕</button>
   </div>
 
-  <div class="hero" id="hero">
-    Discover Best Shops Near You 🔥
-  </div>
+  <div class="hero" id="hero">Loading...</div>
 
   <div style="padding:10px;">
     <input id="search" placeholder="Search shops..." onkeyup="render()">
     <div id="list"></div>
   </div>
-
 </div>
 
 <!-- ADD SHOP -->
@@ -137,10 +140,10 @@ button{
   <input id="shopLocation" placeholder="Location">
   <input id="shopContact" placeholder="Contact">
   <textarea id="shopMsg" placeholder="Description"></textarea>
+
   <input type="file" id="shopImage">
 
   <button onclick="saveShop()">Upload Shop</button>
-
 </div>
 
 <script>
@@ -161,50 +164,53 @@ const storage = firebase.storage();
 
 /* DATA */
 let userName="", userCity="", userState="";
-let shops=[];
 
 /* SPLASH */
 setTimeout(()=>{
+
   document.getElementById("splash").classList.add("hidden");
 
-  let user = localStorage.getItem("user");
+  let user = JSON.parse(localStorage.getItem("user"));
 
-  if(user){
-    user = JSON.parse(user);
-    userName=user.name;
-    userCity=user.city;
-    userState=user.state;
-    openHome();
-  } else {
+  if(!user){
     document.getElementById("onboard").classList.remove("hidden");
+  } else {
+    startHome(user);
   }
+
 },2000);
 
 /* START */
 function startApp(){
-  userName = name.value;
-  userCity = city.value;
-  userState = state.value;
 
-  localStorage.setItem("user", JSON.stringify({
-    name:userName,
-    city:userCity,
-    state:userState
-  }));
+  let user = {
+    name: name.value,
+    city: city.value,
+    state: state.value
+  };
 
-  openHome();
+  localStorage.setItem("user", JSON.stringify(user));
+  startHome(user);
 }
 
 /* HOME */
-function openHome(){
+function startHome(user){
+
+  userName = user.name;
+  userCity = user.city;
+  userState = user.state;
+
   document.getElementById("onboard").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
   document.getElementById("userText").innerText =
     `👤 ${userName} | 📍 ${userCity}, ${userState}`;
 
+  document.getElementById("hero").style.backgroundImage =
+    `url('https://source.unsplash.com/1600x900/?${userCity},india,city')`;
+
   document.getElementById("hero").innerText =
-    `Welcome to ${userCity} ❤️ Explore Shops`;
+    `Welcome to ${userCity} ❤️`;
 
   loadShops();
 }
@@ -214,9 +220,10 @@ function showAdd(){
   document.getElementById("addForm").classList.remove("hidden");
 }
 
-/* IMAGE UPLOAD */
+/* UPLOAD IMAGE */
 function uploadImage(file, cb){
   let ref = storage.ref("shops/" + Date.now() + "_" + file.name);
+
   ref.put(file).then(snap=>{
     snap.ref.getDownloadURL().then(cb);
   });
@@ -233,15 +240,15 @@ function saveShop(){
 
   uploadImage(file,(url)=>{
 
-    let shop={
-      name:shopName.value,
-      type:shopType.value,
-      item:shopItem.value,
-      location:shopLocation.value,
-      contact:shopContact.value,
-      msg:shopMsg.value,
-      city:userCity,
-      image:url
+    let shop = {
+      name: shopName.value,
+      type: shopType.value,
+      item: shopItem.value,
+      location: shopLocation.value,
+      contact: shopContact.value,
+      msg: shopMsg.value,
+      city: userCity,
+      image: url
     };
 
     db.ref("shops").push(shop);
@@ -249,27 +256,33 @@ function saveShop(){
     alert("Shop Added 🚀");
 
     document.getElementById("addForm").classList.add("hidden");
+
+    loadShops();
   });
 }
 
 /* LOAD */
 function loadShops(){
+
   db.ref("shops").on("value",snap=>{
-    shops=[];
+
+    let shops = [];
+
     snap.forEach(s=>{
-      let d=s.val();
-      if(d.city===userCity){
+      let d = s.val();
+      if(d.city && d.city.toLowerCase() === userCity.toLowerCase()){
         shops.push(d);
       }
     });
-    render();
+
+    render(shops);
   });
 }
 
 /* RENDER */
-function render(){
+function render(shops=[]){
 
-  let q = search.value.toLowerCase();
+  let q = search.value ? search.value.toLowerCase() : "";
   let list = document.getElementById("list");
 
   let filtered = shops.filter(s =>
@@ -277,17 +290,17 @@ function render(){
     s.type.toLowerCase().includes(q)
   );
 
-  list.innerHTML="";
-
   if(filtered.length===0){
     list.innerHTML = `
       <div class="card">
-        <h3>No Shops Found 📍</h3>
-        <p>Add first shop in your city</p>
+        <h3>No Shops Yet 📍</h3>
+        <p>Be first to add shop in ${userCity}</p>
       </div>
     `;
     return;
   }
+
+  list.innerHTML="";
 
   filtered.forEach(s=>{
     list.innerHTML+=`
@@ -308,3 +321,4 @@ function render(){
 
 </body>
 </html>
+
