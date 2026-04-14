@@ -139,7 +139,6 @@ button{
     <input id="shopLocation" placeholder="Location">
     <input id="shopContact" placeholder="Contact">
     <textarea id="shopMsg" placeholder="Description"></textarea>
-    <input type="file" id="shopImage">
 
     <button onclick="saveShop()">Upload</button>
     <button onclick="closeModal()">Close</button>
@@ -251,31 +250,26 @@ function uploadImage(file, cb){
 /* SAVE SHOP FIX */
 function saveShop(){
 
-  const file = document.getElementById("shopImage").files[0];
+  const shop = {
+    name: document.getElementById("shopName").value.trim(),
+    type: document.getElementById("shopType").value.trim(),
+    item: document.getElementById("shopItem").value.trim(),
+    location: document.getElementById("shopLocation").value.trim(),
+    contact: document.getElementById("shopContact").value.trim(),
+    msg: document.getElementById("shopMsg").value.trim(),
+    city: user.city.toLowerCase(),
+    image: "" // no image for now
+  };
 
-  if(!file){
-    alert("Select image first");
+  if(!shop.name || !shop.type){
+    alert("Name aur Type required hai");
     return;
   }
 
-  uploadImage(file,(url)=>{
+  db.ref("shops").push(shop);
 
-    const shop = {
-      name: document.getElementById("shopName").value.trim(),
-      type: document.getElementById("shopType").value.trim(),
-      item: document.getElementById("shopItem").value.trim(),
-      location: document.getElementById("shopLocation").value.trim(),
-      contact: document.getElementById("shopContact").value.trim(),
-      msg: document.getElementById("shopMsg").value.trim(),
-      city: user.city.toLowerCase(),
-      image: url
-    };
-
-    db.ref("shops").push(shop);
-
-    alert("Shop Added 🚀");
-    closeModal();
-  });
+  alert("Shop Added 🚀");
+  closeModal();
 }
 
 /* LOAD */
