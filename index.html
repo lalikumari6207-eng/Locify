@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Locify Pro</title>
 
-<!-- FONT -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
 <style>
-
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
@@ -17,7 +15,6 @@ body {
   color: white;
 }
 
-/* SPLASH */
 .center {
   display:flex;
   justify-content:center;
@@ -40,26 +37,23 @@ body {
 
 .hidden { display:none; }
 
-/* TOPBAR */
 .topbar {
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
   padding: 15px;
-  font-size: 18px;
+  font-size: 16px;
 }
 
-/* INPUT */
 input {
   padding: 12px;
-  width: 95%;
-  margin: 10px;
+  width: 90%;
+  margin: 8px;
   border-radius: 12px;
   border: none;
   background: rgba(255,255,255,0.1);
   color: white;
 }
 
-/* BUTTON */
 button {
   padding: 10px 15px;
   border-radius: 20px;
@@ -75,7 +69,6 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* CARD */
 .card {
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
@@ -99,7 +92,6 @@ button:hover {
   font-size:22px;
   cursor:pointer;
 }
-
 </style>
 </head>
 
@@ -108,9 +100,18 @@ button:hover {
 <!-- SPLASH -->
 <div id="splash" class="center splash">Locify</div>
 
+<!-- ONBOARD -->
+<div id="onboard" class="center hidden">
+  <h2>Welcome to Locify</h2>
+  <input id="name" placeholder="Enter your name">
+  <input id="city" placeholder="Enter your city">
+  <input id="state" placeholder="Enter your state">
+  <button onclick="goHome()">Enter App</button>
+</div>
+
 <!-- HOME -->
 <div id="home" class="hidden">
-  <div class="topbar" id="locationText">📍 Detecting location...</div>
+  <div class="topbar" id="locationText">📍 Loading...</div>
 
   <div style="padding:10px;">
     <input id="search" placeholder="Search shops..." onkeyup="renderList()">
@@ -122,7 +123,10 @@ button:hover {
 
 <script>
 
+let userName = "";
 let userCity = "";
+let userState = "";
+
 let favorites = JSON.parse(localStorage.getItem("fav")) || [];
 let shops = [];
 
@@ -131,24 +135,41 @@ setTimeout(startApp, 3000);
 
 function startApp(){
   document.getElementById("splash").classList.add("hidden");
-  document.getElementById("home").classList.remove("hidden");
-  getLocation();
+
+  let savedUser = JSON.parse(localStorage.getItem("user"));
+
+  if(savedUser){
+    userName = savedUser.userName;
+    userCity = savedUser.userCity;
+    userState = savedUser.userState;
+
+    document.getElementById("home").classList.remove("hidden");
+    updateTopbar();
+    loadShops();
+  } else {
+    document.getElementById("onboard").classList.remove("hidden");
+  }
 }
 
-// LOCATION
-function getLocation(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`)
-    .then(res=>res.json())
-    .then(data=>{
-      userCity = data.address.city || data.address.town || data.address.village;
+// GO HOME AFTER INPUT
+function goHome(){
+  userName = document.getElementById("name").value;
+  userCity = document.getElementById("city").value;
+  userState = document.getElementById("state").value;
 
-      document.getElementById("locationText").innerText =
-        `📍 ${userCity}`;
+  localStorage.setItem("user", JSON.stringify({userName, userCity, userState}));
 
-      loadShops();
-    });
-  });
+  document.getElementById("onboard").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
+
+  updateTopbar();
+  loadShops();
+}
+
+// TOPBAR UPDATE
+function updateTopbar(){
+  document.getElementById("locationText").innerText =
+    `👋 ${userName} | 📍 ${userCity}, ${userState}`;
 }
 
 // LOAD SHOPS
